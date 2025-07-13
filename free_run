@@ -1,0 +1,60 @@
+import sqlite3
+import pandas as pd
+from rapidfuzz import fuzz, process
+
+# --- Paths ---
+db_path = r"C:\Users\User\Desktop\Core.sqlite"
+
+# --- Load data from data_df for postcode 43000 ---
+conn = sqlite3.connect(db_path)
+query = "SELECT address FROM data_df WHERE postcode = '43000'"
+df = pd.read_sql_query(query, conn)
+conn.close()
+
+# --- Normalize address strings ---
+df["clean_address"] = df["address"].str.lower().str.strip()
+
+# --- List of target building names ---
+target_names = [
+    "residensi mutiara kajang",
+    "lakefield residences",
+    "villa residence",
+    "pangsapuri goodview height 2 (villa residence)",
+    "embun residence",
+    "topaz residence condominium",
+    "opal residence condominium",
+    "ameera residence mutiara heights",
+    "ivory residence condominium",
+    "akoya residence condominium",
+    "oasis 1 residence condominium",
+    "oasis 2 residence condominium",
+    "palm hill residence 1",
+    "palm hill residence 2",
+    "palm hill residence 3",
+    "jalan anjung residensi 1/3",
+    "bukit idaman residensi condominium",
+    "permata residence condominium",
+    "tiara vista residence",
+    "sungai long residence condominium",
+    "the i residence condominum",
+    "k residences",
+    "sentral residences",
+    "residensi nexus kajang",
+    "residensi nexus kajang blok c",
+    "residensi nexus kajang blok b",
+    "residensi nexus kajang blok a",
+    "quas residence"
+]
+
+# For each target, count fuzzy matches above a threshold
+threshold = 90  # adjust as needed
+
+print("📊 Fuzzy matches in postcode 43000:\n")
+for name in target_names:
+    count = sum(
+        fuzz.partial_ratio(name.lower(), addr) >= threshold
+        for addr in df["clean_address"]
+    )
+    print(f" - {name} ≈ {count}")
+
+

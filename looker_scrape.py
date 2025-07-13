@@ -1,0 +1,44 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+import os
+
+# --- Configuration ---
+URL = "https://lookerstudio.google.com/reporting/df40fa06-aeb3-439a-b62a-c3ed45335dc9/page/TEEAE"
+WAIT_TIME = 10  # seconds
+CHROMEDRIVER_PATH = "chromedriver.exe"  # Make sure this matches your .exe location
+
+# --- Setup Selenium Headless Chrome ---
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # run browser in background
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--window-size=1920,1080")
+
+driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, options=chrome_options)
+driver.get(URL)
+
+print(f"🔄 Opening Looker Studio report...")
+time.sleep(WAIT_TIME)
+
+# --- Parse HTML ---
+soup = BeautifulSoup(driver.page_source, 'html.parser')
+driver.quit()
+
+# --- Try to Find Tables ---
+tables = soup.find_all('table')
+if not tables:
+    print("⚠️ No HTML tables found — report may be canvas-based.")
+    print("🛠️ Try manually exporting CSV from the UI, or contact the report owner.")
+    exit()
+
+# --- Convert and Save Tables ---
+for i, table in enumerate(tables):
+    try:
+        df = pd.read_html(str(table))[0]
+        out_name = f"looker_table_{i+1}.csv"
+        df.to_csv(out_name, index=False)
+        print(f"✅ Saved: {out_name}")
+    except Exception as e:
+        print(f"❌ Failed to parse table {i+1}: {e}")

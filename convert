@@ -1,0 +1,39 @@
+import sqlite3
+import pandas as pd
+import os
+
+# --- Define paths ---
+desktop_path = os.path.expanduser("~/Desktop")
+sqlite_path = os.path.join(desktop_path, "Core.sqlite")
+parquet_path = os.path.join(desktop_path, "Core_2025.parquet")
+
+# --- Confirm file exists ---
+if not os.path.isfile(sqlite_path):
+    print(f"❌ File not found: {sqlite_path}")
+    exit()
+
+try:
+    # --- Connect to SQLite ---
+    print(f"🔗 Connecting to DB: {sqlite_path}")
+    conn = sqlite3.connect(sqlite_path)
+
+    # --- Extract 2025 records ---
+    print("📦 Extracting rows with data_date between 202501 and 202512...")
+    query = """
+        SELECT postcode, LL, split, data_date
+        FROM data_df
+        WHERE data_date BETWEEN 202501 AND 202512
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+
+    # --- Save as Parquet ---
+    print(f"💾 Saving to: {parquet_path}")
+    df.to_parquet(parquet_path, index=False)
+
+    print(f"\n✅ Success: {len(df):,} rows saved to Core_2025.parquet")
+
+except Exception as e:
+    print(f"❌ Error: {e}")
+
+#20,990,371 rows saved to Core_2025.parquet

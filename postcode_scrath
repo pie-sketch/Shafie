@@ -1,0 +1,47 @@
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import pandas as pd
+
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+
+# Optional: set headless mode
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+
+# Path to your ChromeDriver (update if needed)
+driver = webdriver.Chrome(options=chrome_options)
+
+# Load the webpage
+driver.get("https://postcode.my/browse/selangor/")
+
+# Wait until page loads
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.CSS_SELECTOR, "ul.list-unstyled li"))
+)
+
+# Parse the final rendered HTML
+html = driver.page_source
+driver.quit()
+
+# Scrape data
+soup = BeautifulSoup(html, "html.parser")
+data = []
+for li in soup.select("ul.list-unstyled li"):
+    text = li.text.strip()
+    if "," in text:
+        split = text.rsplit(",", 1)
+        place = split[0].strip()
+        postcode = split[1].strip()
+        data.append((place, postcode))
+
+# Save to DataFrame
+df = pd.DataFrame(data, columns=["Place", "Postcode"])
+print(df.head())
+
+# Optional: Save to CSV
+# df.to_csv("selangor_postcodes.csv", index=False)

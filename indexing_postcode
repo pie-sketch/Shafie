@@ -1,0 +1,11 @@
+import sqlite3
+
+conn = sqlite3.connect("C:/Users/User/Desktop/Core.sqlite")
+cursor = conn.cursor()
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_postcode ON data_df(postcode)")
+conn.commit()
+conn.close()
+print("✅ Index created.")
+
+#no need to run. one time run
+#it was for indexing postcode at Core.sqlite
